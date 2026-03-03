@@ -1,18 +1,22 @@
+from typing import List, Callable, Tuple
+
+from common.nmea_data_components import Coordinates, LLH, Latitude, Longitude, Altitude
 from common.nmea_data_manager import NMEAManager
+from common.nmea_enum import NMEAType, Hemisphere, DistanceMeasureUnit, Ellipsoids
 from common.nmea_instance import NMEAInstance
 
 path = r"data/ISTShuttle.nmea"
 
-nmea_instances: NMEAManager = NMEAManager()
+manager: NMEAManager = NMEAManager()
 
 with open(path, "r", encoding="utf-8") as f:
     for line in f:
         instance = NMEAInstance(line)
-        nmea_instances.add_instance(instance)
+        manager.add_instance(instance)
 
 
-    for instance in nmea_instances.get_instances():
-        instance.parse()
+    # manager.print_status()
 
-
-    nmea_instances.print_status()
+cond: Callable[[NMEAInstance], bool] = lambda x: x.data.fix_quality.value not in [0, 6, 7, 8] and x.valid == True
+coordinates: List[LLH] = [LLH(c.data.coordinates, c.data.altitude) for c in manager.get_instances_by_type(NMEAType.GGA, cond)]
+xyz_coords: List[Tuple[float, float, float]] = [c.llh_to_xyz(Ellipsoids.WGS_84) for c in coordinates]

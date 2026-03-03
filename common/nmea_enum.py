@@ -71,3 +71,9 @@ class FixMode(Enum):
     TWO_D_FIX       = 2
     THREE_D_FIX     = 3
 
+
+
+class Ellipsoids(Enum):
+    WGS_84  = 1
+    PZ_90   = 2
+    GRS_80  = 3

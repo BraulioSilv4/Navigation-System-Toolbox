@@ -11,6 +11,7 @@ class NMEAInstance:
     def __init__(self, data):
         self.nmea_str = data
         self._data: Optional[Union[GGA, GLL, GSA, GSV, RMC, VTG, ZDA]] = None
+        self._valid: Optional[bool] = None
         try:
             self.constellation = Constellation[data[1:3]]
             self.type = NMEAType[data[3:6]]
@@ -23,7 +24,14 @@ class NMEAInstance:
     constellation: Optional[Constellation] = None
     type: Optional[NMEAType] = None
     nmea_str: str = None
-    valid: Optional[bool] = None
+
+
+    @property
+    def valid(self):
+        if self._valid is None:
+            self._valid = self.validate()
+        return self._valid
+
 
     @property
     def data(self):
@@ -72,5 +80,5 @@ class NMEAInstance:
         checksum_str = self.nmea_str.split('*')[1]
         checksum: Checksum = Checksum(int(checksum_str, 16))
         valid = checksum.validate_checksum(self.nmea_str)
-        self.valid = valid
+        self._valid = valid
         return valid
