@@ -72,10 +72,10 @@ class NMEAManager:
         coordinates: List[Coordinates] = [c.data.coordinates for c in self.get_instances_by_type(NMEAType.GLL, cond)]
         lats: List[Latitude] = [l.lat for l in coordinates]
         lons: List[Longitude] = [l.lon for l in coordinates]
-        max_lat: Latitude = max(lats, key=lambda x: x.to_signed_lat())
-        min_lat: Latitude = min(lats, key=lambda x: x.to_signed_lat())
-        max_lon: Longitude = max(lons, key=lambda x: x.to_signed_lon())
-        min_lon: Longitude = min(lons, key=lambda x: x.to_signed_lon())
+        max_lat: Latitude = max(lats, key=lambda x: x.to_dd())
+        min_lat: Latitude = min(lats, key=lambda x: x.to_dd())
+        max_lon: Longitude = max(lons, key=lambda x: x.to_dd())
+        min_lon: Longitude = min(lons, key=lambda x: x.to_dd())
         return max_lat, min_lat, max_lon, min_lon
 
 

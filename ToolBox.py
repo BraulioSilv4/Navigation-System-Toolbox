@@ -1,8 +1,8 @@
 from typing import List, Callable, Tuple
 
-from common.nmea_data_components import Coordinates, LLH, Latitude, Longitude, Altitude
+from common.nmea_data_components import LLH
 from common.nmea_data_manager import NMEAManager
-from common.nmea_enum import NMEAType, Hemisphere, DistanceMeasureUnit, Ellipsoids
+from common.nmea_enum import NMEAType, Ellipsoids
 from common.nmea_instance import NMEAInstance
 
 path = r"data/ISTShuttle.nmea"
