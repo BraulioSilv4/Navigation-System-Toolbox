@@ -19,4 +19,4 @@ with open(path, "r", encoding="utf-8") as f:
 
 cond: Callable[[NMEAInstance], bool] = lambda x: x.data.fix_quality.value not in [0, 6, 7, 8] and x.valid == True
 coordinates: List[LLH] = [LLH(c.data.coordinates, c.data.altitude) for c in manager.get_instances_by_type(NMEAType.GGA, cond)]
-xyz_coords: List[Tuple[float, float, float]] = [c.llh_to_xyz(Ellipsoids.WGS_84) for c in coordinates]
+xyz_coords: List[Tuple[float, float, float]] = [c.llh_to_ecef(Ellipsoids.WGS_84) for c in coordinates]
