@@ -128,7 +128,6 @@ class ECEF:
 
     def ecef_to_llh(self, ellipsoid: Ellipsoids = None) -> LLH:
         if ellipsoid is None:
-            print("No ellipsoid provided for LLH to XYZ conversion! Defaulting to WGS 84.")
             ellipsoid = Ellipsoids.WGS_84
 
 
@@ -214,7 +213,6 @@ class LLH:
     # Method to convert LLH to XYZ coordinates using the specified ellipsoid parameters
     def llh_to_ecef(self, ellipsoid: Ellipsoids = None) -> ECEF:
         if ellipsoid is None:
-            print("No ellipsoid provided for LLH to ECEF conversion! Defaulting to WGS 84.")
             ellipsoid = Ellipsoids.WGS_84
 
 
