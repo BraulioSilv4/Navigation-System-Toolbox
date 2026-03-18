@@ -1,4 +1,4 @@
-from common.nmea_data_components import LLH, Coordinates, Latitude, Longitude, Altitude, ECEF, ENU
+from common.nmea_data_components import LLH, Coordinates, Latitude, Longitude, Altitude, ECEF, ENU, Datum
 from common.nmea_enum import Hemisphere, DistanceMeasureUnit, Ellipsoids
 from common.nmea_functions import distance_between
 
@@ -22,7 +22,7 @@ print(f"""
 """)
 
 
-p1_ecef: ECEF = p1.llh_to_ecef(ellipsoid=Ellipsoids.WGS_84)
+p1_ecef: ECEF = p1.llh_to_ecef(source=Ellipsoids.WGS_84)
 
 print(f"""
     X: {p1_ecef.x:.4f} m
@@ -50,7 +50,7 @@ print(f"""
 """)
 
 
-dist_p1_p2 = distance_between(p1, p2)
+dist_p1_p2 = distance_between(p1, p2, ellipsoid=Ellipsoids.WGS_84)
 
 print(f"Distance between p1 and p2: {dist_p1_p2:.4f} m")
 
@@ -70,3 +70,23 @@ print(f"""
     Azimuth from p1 to p2: {azimuth:.4f}º
     Elevation from p1 to p2: {elevation:.4f}º
 """)
+
+dat: Datum = Datum(da=-251, df=-0.14192702e-4, dx=-84, dy=-107, dz=-120)
+
+p1_europe1950 = p1.molodensky_transform(source=Ellipsoids.WGS_84, target=dat.invert())
+p2_europe1950 = p2_llh.molodensky_transform(source=Ellipsoids.WGS_84, target=dat.invert())
+
+p1_europe1950_ecef_datumshift = p1_ecef.datum_shift(source=Ellipsoids.WGS_84, target=dat.invert())
+p2_europe1950_ecef_datumshift = p2.datum_shift(source=Ellipsoids.WGS_84, target=dat.invert())
+
+p1_europe1950_ecef_molo = p1_europe1950.llh_to_ecef(source=Ellipsoids.ED_50)
+p2_europe1950_ecef_molo = p2_europe1950.llh_to_ecef(source=Ellipsoids.ED_50)
+
+print(f"p1: {p1_europe1950}")
+print(f"p2: {p2_europe1950}")
+
+print(f"p1 ECEF Datum Shift: {p1_europe1950_ecef_datumshift}")
+print(f"p2 ECEF Datum Shift: {p2_europe1950_ecef_datumshift}")
+
+print(f"p1 ECEF Molodensky:  {p1_europe1950_ecef_molo}")
+print(f"p2 ECEF Molodensky:  {p2_europe1950_ecef_molo}")

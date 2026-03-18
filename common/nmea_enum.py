@@ -77,3 +77,4 @@ class Ellipsoids(Enum):
     WGS_84  = 1
     PZ_90   = 2
     GRS_80  = 3
+    ED_50   = 4

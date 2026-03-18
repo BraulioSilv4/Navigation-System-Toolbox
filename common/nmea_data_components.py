@@ -10,6 +10,10 @@ from common.nmea_enum import DistanceMeasureUnit, Hemisphere, Ellipsoids
 from constants.GRS_80 import a as a_grs80, f as f_grs80, b as b_grs80, e as e_grs80
 from constants.PZ_90 import a as a_pz90, f as f_pz90, b as b_pz90, e as e_pz90
 from constants.WGS_84 import a as a_wgs84, f as f_wgs84, b as b_wgs84, e as e_wgs84
+from constants.ED_50 import a as a_ed50, f as f_ed50, b as b_ed50, e as e_ed50
+
+def to_arcseconds(degrees: float) -> float:
+    return degrees * 3600.0
 
 
 @dataclass
@@ -126,6 +130,14 @@ class ECEF:
     z: float = None
 
 
+    def datum_shift(self, source: Ellipsoids, target: Datum) -> ECEF:
+        return ECEF(
+            x=self.x + target.dx,
+            y=self.y + target.dy,
+            z=self.z + target.dz
+        )
+
+
     def ecef_to_llh(self, ellipsoid: Ellipsoids = None) -> LLH:
         if ellipsoid is None:
             ellipsoid = Ellipsoids.WGS_84
@@ -135,6 +147,7 @@ class ECEF:
             Ellipsoids.WGS_84: (a_wgs84, f_wgs84, b_wgs84),
             Ellipsoids.PZ_90: (a_pz90, f_pz90, b_pz90),
             Ellipsoids.GRS_80: (a_grs80, f_grs80, b_grs80),
+            Ellipsoids.ED_50: (a_ed50, f_ed50, b_ed50),
         }
 
         a, f, b = ellipsoid_params[ellipsoid]
@@ -203,6 +216,10 @@ class ECEF:
         return ENU(enu[0], enu[1], enu[2])
 
 
+    def __str__(self):
+        return f"X: {self.x:.4f} m, Y: {self.y:.4f} m, Z: {self.z:.4f} m"
+
+
 
 @dataclass
 class LLH:
@@ -211,18 +228,15 @@ class LLH:
 
 
     # Method to convert LLH to XYZ coordinates using the specified ellipsoid parameters
-    def llh_to_ecef(self, ellipsoid: Ellipsoids = None) -> ECEF:
-        if ellipsoid is None:
-            ellipsoid = Ellipsoids.WGS_84
-
-
+    def llh_to_ecef(self, source: Ellipsoids) -> ECEF:
         ellipsoid_params = {
             Ellipsoids.WGS_84: (a_wgs84, f_wgs84),
             Ellipsoids.PZ_90: (a_pz90, f_pz90),
             Ellipsoids.GRS_80: (a_grs80, f_grs80),
+            Ellipsoids.ED_50: (a_ed50, f_ed50),
         }
 
-        a, f = ellipsoid_params[ellipsoid]
+        a, f = ellipsoid_params[source]
 
         rad_lat: float = radians(self.coordinates.lat.to_dd())
         rad_lon: float = radians(self.coordinates.lon.to_dd())
@@ -235,7 +249,7 @@ class LLH:
 
     # IDK if I should call the ellipsoid datum or not. Ill just call it datum for now.
     def molodensky_transform(self, source: Ellipsoids = Ellipsoids.WGS_84, target: Datum = None) -> Optional[LLH]:
-        if source or target is None:
+        if source is None or target is None:
             print("Molodensky transformation requires both source and target datums.")
             return None
 
@@ -244,6 +258,7 @@ class LLH:
             Ellipsoids.WGS_84: (a_wgs84, b_wgs84, e_wgs84),
             Ellipsoids.PZ_90: (a_pz90, b_pz90, e_pz90),
             Ellipsoids.GRS_80: (a_grs80, b_grs80, e_grs80),
+            Ellipsoids.ED_50: (a_ed50, b_ed50, e_ed50),
         }
 
         a, b, e = ellipsoid_params[source]
@@ -257,11 +272,15 @@ class LLH:
         d_lat_rad = (((-target.dx * math.sin(rad_lat) * math.cos(rad_lon)) - (target.dy * math.sin(rad_lat) * math.sin(rad_lon)) + (target.dz * math.cos(rad_lat)) + (
                     target.da * ((R_n * pow(e, 2)) / a) + target.df * (R_m * (a / b) + R_n * (b / a))) * math.sin(rad_lat) * math.cos(rad_lat)) /
                      (R_m + self.altitude.value))
+        d_lat_deg = math.degrees(d_lat_rad)
+        d_lat_arcseconds = to_arcseconds(d_lat_deg)
         d_lon_rad = ((-target.dx * math.sin(rad_lon)) + (target.dy * math.cos(rad_lon))) / ((R_n + self.altitude.value) * math.cos(rad_lat))
+        d_lon_deg = math.degrees(d_lon_rad)
+        d_lon_arcseconds = to_arcseconds(d_lon_deg)
         d_h = (target.dx * math.cos(rad_lat) * math.cos(rad_lon)) + (target.dy * math.cos(rad_lat) * math.sin(rad_lon)) + (target.dz * math.sin(rad_lat)) - (target.da * (a / R_n)) + (target.df * ((b / a) * R_n * pow(sin(rad_lat), 2)))
 
-        new_lat = self.coordinates.lat.to_dd() + math.degrees(d_lat_rad)
-        new_lon = self.coordinates.lon.to_dd() + math.degrees(d_lon_rad)
+        new_lat = self.coordinates.lat.to_dd() + d_lat_deg
+        new_lon = self.coordinates.lon.to_dd() + d_lon_deg
         new_alt = self.altitude.value + d_h
 
         return LLH(
@@ -270,6 +289,21 @@ class LLH:
                 Longitude.from_dd(new_lon)
             ),
             Altitude(new_alt, DistanceMeasureUnit.METERS)
+        )
+
+
+    def __str__(self):
+        lat_deg, lat_min, lat_sec, lat_dir = self.coordinates.lat.to_dms()
+        lon_deg, lon_min, lon_sec, lon_dir = self.coordinates.lon.to_dms()
+        lat_dd = self.coordinates.lat.to_dd()
+        lon_dd = self.coordinates.lon.to_dd()
+        return (
+            f"""
+            DD.ddd:                               DDDMM.mmm:                          DMS:
+            Latitude: {lat_dd:.4f}º {lat_dir.value}                  Latitude: {self.coordinates.lat.degrees}º{self.coordinates.lat.minutes:.3f}'{self.coordinates.lat.lat_dir.value}               Latitude: {lat_deg}º{lat_min}'{lat_sec:.2f}" {lat_dir.value}
+            Longitude: {lon_dd:.4f}º {lon_dir.value}                 Longitude: {self.coordinates.lon.degrees}º{self.coordinates.lon.minutes:.3f}'{self.coordinates.lon.lon_dir.value}               Longitude: {lon_deg}º{lon_min}'{lon_sec:.2f}" {lon_dir.value}
+            Altitude: {self.altitude.value:.4f} {self.altitude.unit.value}                   Altitude: {self.altitude.value:.4f} {self.altitude.unit.value}                 Altitude: {self.altitude.value:.4f} {self.altitude.unit.value}    
+            """
         )
 
 
@@ -298,6 +332,15 @@ class Datum:
     dx: float = None
     dy: float = None
     dz: float = None
+
+    def invert(self) -> Datum:
+        return Datum(
+            da=-self.da if self.da is not None else None,
+            df=-self.df if self.df is not None else None,
+            dx=-self.dx if self.dx is not None else None,
+            dy=-self.dy if self.dy is not None else None,
+            dz=-self.dz if self.dz is not None else None
+        )
 
 
 
