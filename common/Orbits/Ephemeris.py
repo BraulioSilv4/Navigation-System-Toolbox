@@ -119,7 +119,7 @@ class Ephemeris:
         d = float('inf')
         s = ECEF(0.0, 0.0, 0.0)
 
-        while math.fabs(dp - d) > 0.001:  # 1 mm precision
+        while math.fabs(dp - d) > 0.0001:  # 1 mm precision
             niter += 1
             d = dp  # d = d'
 
