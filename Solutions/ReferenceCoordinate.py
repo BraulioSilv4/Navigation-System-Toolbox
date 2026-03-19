@@ -1,6 +1,6 @@
-from common.nmea_data_components import LLH, Coordinates, Latitude, Longitude, Altitude, ECEF, ENU, Datum
-from common.nmea_enum import Hemisphere, DistanceMeasureUnit, Ellipsoids
-from common.nmea_functions import distance_between
+from common.data_components import LLH, Coordinates, Latitude, Longitude, Altitude, ECEF, ENU, Datum
+from common.NMEA.nmea_enum import Hemisphere, DistanceMeasureUnit, Ellipsoids
+from common.functions import distance_between
 
 p1: LLH = LLH(
     Coordinates(
@@ -90,3 +90,41 @@ print(f"p2 ECEF Datum Shift: {p2_europe1950_ecef_datumshift}")
 
 print(f"p1 ECEF Molodensky:  {p1_europe1950_ecef_molo}")
 print(f"p2 ECEF Molodensky:  {p2_europe1950_ecef_molo}")
+
+################################################ Exercise 7 ################################################
+ny: LLH = LLH(
+    Coordinates(
+        Latitude.from_dms(degrees=40, minutes=45, seconds=0.0, lat_dir=Hemisphere.NORTH),
+        Longitude.from_dms(degrees=73, minutes=58, seconds=0.0, lon_dir=Hemisphere.WEST)
+    ),
+    Altitude(
+        value=0.0,
+        unit=DistanceMeasureUnit.METERS
+    )
+)
+
+london: LLH = LLH(
+    Coordinates(
+        Latitude.from_dms(degrees=51, minutes=32, seconds=0.0, lat_dir=Hemisphere.NORTH),
+        Longitude.from_dms(degrees=0, minutes=10, seconds=0.0, lon_dir=Hemisphere.WEST)
+    ),
+    Altitude(
+        value=0.0,
+        unit=DistanceMeasureUnit.METERS
+    )
+)
+
+dist_ny_london, depart_heading, approach_heading = ny.orthodrome(london, radius=6378.0)
+
+print(f"""
+    Distance between New York and London: {dist_ny_london:.4f} km
+    Departure Heading from New York to London: {depart_heading:.4f}º
+    Approach Heading from London to New York: {approach_heading:.4f}º
+""")
+
+loxodrome_dist_ny_london, loxodrome_heading = ny.loxodrome(london, radius=6378.0)
+
+print(f"""
+    Loxodrome Distance between New York and London: {loxodrome_dist_ny_london:.4f} km
+    Loxodrome Heading from New York to London: {loxodrome_heading:.4f}º
+""")

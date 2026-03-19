@@ -1,5 +1,5 @@
-from common.nmea_data_manager import NMEAManager
-from common.nmea_instance import NMEAInstance
+from common.NMEA.nmea_data_manager import NMEAManager
+from common.NMEA.nmea_instance import NMEAInstance
 
 path = r"../data/ISTShuttle.nmea"
 

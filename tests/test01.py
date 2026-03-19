@@ -1,10 +1,10 @@
 from typing import Callable, List
 
-from common.nmea_data_components import Coordinates, LLH, ECEF, ENU
-from common.nmea_data_manager import NMEAManager
-from common.nmea_enum import NMEAType
-from common.nmea_functions import distance_between
-from common.nmea_instance import NMEAInstance
+from common.data_components import Coordinates, LLH, ECEF, ENU
+from common.NMEA.nmea_data_manager import NMEAManager
+from common.NMEA.nmea_enum import NMEAType
+from common.functions import distance_between
+from common.NMEA.nmea_instance import NMEAInstance
 
 path = r"../data/trackWA1_2025-2026.nmea"
 
