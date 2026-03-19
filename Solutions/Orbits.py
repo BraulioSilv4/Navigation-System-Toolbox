@@ -1,6 +1,9 @@
+from typing import Tuple
+
 from Solutions.ReferenceCoordinate import azimuth
 from common.Orbits.Ephemeris import Ephemeris, calc_dt
 from common.Orbits.KeplerianOrbit import KeplerianOrbit
+from common.Orbits.ephemeris_parser import EphemerisParser
 from common.data_components import ECEF, ENU
 
 orbit: KeplerianOrbit = KeplerianOrbit(a=26559755, e=0.017545, omega=1.626021)
@@ -65,3 +68,30 @@ print(f"Azimuth of the satellite from the observer: {azi} deg")
 print(f"Elevation of the satellite from the observer: {ele} deg")
 
 ############## Exercise 6 ##############
+eph_parser: EphemerisParser = EphemerisParser(file="../data/ub1.ubx.2056.540000a.eph")
+orbits: Tuple[int, Ephemeris] = eph_parser.parse()
+
+for sv, eph in orbits:
+    cart_pos = eph.calculate_position(t=536400.0)
+    print(f"SV: {sv}, cartesian position at t=536400.0 seconds: {cart_pos}")
+
+
+############## Exercise 7 ##############
+print("")
+
+for sv, eph in orbits:
+    pos_at_tx, niter = eph.sat_position_at_tx(r=r1, t_rx=536400.0)
+    print(f"SV: {sv}, satellite position at transmission time: {pos_at_tx}, computed in {niter} iterations")
+
+############## Exercise 8 ##############
+print("")
+
+for sv, eph in orbits:
+    pos_at_tx, niter = eph.sat_position_at_tx(r=r1, t_rx=536400.0)
+    dir_cos = r1.ecef_to_direction_cosines(target=pos_at_tx)
+    enu = r1.ecef_to_enu(target=pos_at_tx)
+    enu_dir_cos = enu.enu_to_direction_cosines()
+    azimuth = enu.azimuth()
+    elevation = enu.elevation()
+    print(f"SV: {sv}, direction cosines at transmission time: {dir_cos}, ENU coordinates at transmission time: {enu_dir_cos}")
+    print(f"SV: {sv}, azimuth at transmission time: {azimuth} deg, elevation at transmission time: {elevation} deg")

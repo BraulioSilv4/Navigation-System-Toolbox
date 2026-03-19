@@ -216,6 +216,12 @@ class ECEF:
         return ENU(enu[0], enu[1], enu[2])
 
 
+    def ecef_to_direction_cosines(self, target: ECEF) -> tuple[float, float, float]:
+        l = (target.x - self.x, target.y - self.y, target.z - self.z)
+        norm_l = sqrt(pow(l[0], 2) + pow(l[1], 2) + pow(l[2], 2))
+        return l[0] / norm_l, l[1] / norm_l, l[2] / norm_l
+
+
     def __str__(self):
         return f"X: {self.x:.4f} m, Y: {self.y:.4f} m, Z: {self.z:.4f} m"
 
@@ -362,6 +368,11 @@ class ENU:
     def elevation(self) -> float:
         horizontal_dist = math.sqrt(pow(self.e, 2) + pow(self.n, 2))
         return math.degrees(math.atan2(self.u, horizontal_dist))
+
+
+    def enu_to_direction_cosines(self) -> tuple[float, float, float]:
+        norm = math.sqrt(pow(self.e, 2) + pow(self.n, 2) + pow(self.u, 2))
+        return self.e / norm, self.n / norm, self.u / norm
 
 
 
