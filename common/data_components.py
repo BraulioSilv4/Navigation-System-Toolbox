@@ -4,13 +4,16 @@ import math
 import numpy as np
 from dataclasses import dataclass
 from math import radians, sqrt, sin, cos
-from typing import Optional
+from typing import Optional, Union
 
 from common.NMEA.nmea_enum import DistanceMeasureUnit, Hemisphere, Ellipsoids
 from constants.GRS_80 import a as a_grs80, f as f_grs80, b as b_grs80, e as e_grs80
 from constants.PZ_90 import a as a_pz90, f as f_pz90, b as b_pz90, e as e_pz90
 from constants.WGS_84 import a as a_wgs84, f as f_wgs84, b as b_wgs84, e as e_wgs84
 from constants.ED_50 import a as a_ed50, f as f_ed50, b as b_ed50, e as e_ed50
+
+
+c = 299792458.0  # Speed of light in m/s
 
 def to_arcseconds(degrees: float) -> float:
     return degrees * 3600.0
@@ -122,6 +125,9 @@ class Coordinates:
     lon: Longitude  = None
 
 
+def PDOP(hthinv) -> float:
+    return sqrt(hthinv[0, 0] + hthinv[1, 1] + hthinv[2, 2])
+
 
 @dataclass
 class ECEF:
@@ -221,6 +227,20 @@ class ECEF:
         norm_l = sqrt(pow(l[0], 2) + pow(l[1], 2) + pow(l[2], 2))
         return l[0] / norm_l, l[1] / norm_l, l[2] / norm_l
 
+
+
+    def range(self, target: ECEF) -> float:
+        s_j = np.array([target.x, target.y, target.z])
+        r = np.array([self.x, self.y, self.z])
+        tr2 = (s_j - r).T @ (s_j - r)
+        return sqrt(tr2)
+
+
+    def pseudorange(self, target: ECEF, offset: float = 0.0) -> float:
+        s_j = np.array([target.x, target.y, target.z])
+        r = np.array([self.x, self.y, self.z])
+        e_j = (s_j - r) / np.linalg.norm(s_j - r)
+        return e_j.T @ (s_j - r) + c * offset
 
     def __str__(self):
         return f"X: {self.x:.4f} m, Y: {self.y:.4f} m, Z: {self.z:.4f} m"
