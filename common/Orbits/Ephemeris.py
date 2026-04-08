@@ -19,6 +19,7 @@ def calc_dt(wna: int, towa: float, wnb: int, towb: float) -> float:
 
 @dataclass
 class Ephemeris:
+    SVN: int = 0
     sqrt_a: float = 0.0
     toe: float = 0.0
     WN: int = 0
@@ -113,7 +114,7 @@ class Ephemeris:
 
         return ECEF(x, y, z)
 
-    def sat_position_at_tx(self, r: ECEF, t_rx: float):
+    def sat_position_at_tx(self, r: ECEF, t_rx: float, debug: bool = False):
         niter = 0
         dp = 0.0
         d = float('inf')
@@ -124,8 +125,12 @@ class Ephemeris:
             d = dp  # d = d'
 
             ttx = t_rx - (d / c)
+            if debug:
+                print(f"SVN{self.SVN} Time of transmission: TOW={ttx}")
 
             s = self.calculate_position(ttx)
+            if debug:
+                print(f"SVN{self.SVN} Satellite position @ttx before rotation: {s}")
 
             dlon = earth_rotation_rate * (d / c)
 
@@ -137,6 +142,8 @@ class Ephemeris:
             z_rot = s.z
 
             s = ECEF(x_rot, y_rot, z_rot)
+            if debug:
+                print(f"SVN{self.SVN} Satellite position @ttx after rotation: {s}")
 
             dp = math.sqrt((s.x - r.x) ** 2 + (s.y - r.y) ** 2 + (s.z - r.z) ** 2)
 

@@ -19,6 +19,7 @@ class EphemerisParser:
                 sv = int(fields[0])  # Field (1)
 
                 eph = Ephemeris(
+                    SVN=sv,
                     sqrt_a=float(fields[33]),  # Field (34)
                     toe=float(fields[6]),  # Field (7)
                     WN=int(fields[3]),  # Field (4)

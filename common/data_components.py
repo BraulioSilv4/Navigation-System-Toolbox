@@ -15,6 +15,19 @@ from constants.ED_50 import a as a_ed50, f as f_ed50, b as b_ed50, e as e_ed50
 
 c = 299792458.0  # Speed of light in m/s
 
+
+def HDOP(hthinv) -> float:
+    return sqrt(hthinv[0, 0] + hthinv[1, 1])
+
+
+def GDOP(hthinv) -> float:
+    return sqrt(hthinv[0, 0] + hthinv[1, 1] + hthinv[2, 2] + hthinv[3, 3])
+
+
+def PDOP(hthinv) -> float:
+    return sqrt(hthinv[0, 0] + hthinv[1, 1] + hthinv[2, 2])
+
+
 def to_arcseconds(degrees: float) -> float:
     return degrees * 3600.0
 
@@ -125,10 +138,6 @@ class Coordinates:
     lon: Longitude  = None
 
 
-def PDOP(hthinv) -> float:
-    return sqrt(hthinv[0, 0] + hthinv[1, 1] + hthinv[2, 2])
-
-
 @dataclass
 class ECEF:
     x: float = None
@@ -236,11 +245,16 @@ class ECEF:
         return sqrt(tr2)
 
 
-    def pseudorange(self, target: ECEF, offset: float = 0.0) -> float:
+
+    # Offset is positive if receiver is ahead of satellite
+    def pseudorange(self, target: ECEF, offset: float = 0.0):
         s_j = np.array([target.x, target.y, target.z])
         r = np.array([self.x, self.y, self.z])
         e_j = (s_j - r) / np.linalg.norm(s_j - r)
         return e_j.T @ (s_j - r) + c * offset
+
+    def to_vector(self) -> np.ndarray:
+        return np.array([self.x, self.y, self.z])
 
     def __str__(self):
         return f"X: {self.x:.4f} m, Y: {self.y:.4f} m, Z: {self.z:.4f} m"
@@ -356,6 +370,16 @@ class LLH:
             distance = radius * abs(delta_phi) / math.cos(psi)
 
         return distance, math.degrees(psi)
+
+
+    def to_rotation(self):
+        mat = np.array([
+            [-sin(radians(self.coordinates.lon.to_dd())), cos(radians(self.coordinates.lon.to_dd())), 0],
+            [-sin(radians(self.coordinates.lat.to_dd())) * cos(radians(self.coordinates.lon.to_dd())), -sin(radians(self.coordinates.lat.to_dd())) * sin(radians(self.coordinates.lon.to_dd())), cos(radians(self.coordinates.lat.to_dd()))],
+            [cos(radians(self.coordinates.lat.to_dd())) * cos(radians(self.coordinates.lon.to_dd())), cos(radians(self.coordinates.lat.to_dd())) * sin(radians(self.coordinates.lon.to_dd())), sin(radians(self.coordinates.lat.to_dd()))]
+        ])
+        return mat
+
 
 
     def __str__(self):
