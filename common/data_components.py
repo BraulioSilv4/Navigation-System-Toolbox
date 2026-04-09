@@ -15,15 +15,17 @@ from constants.ED_50 import a as a_ed50, f as f_ed50, b as b_ed50, e as e_ed50
 
 c = 299792458.0  # Speed of light in m/s
 
-
+# Indicator of horizontal position accuracy, higher values indicate worse accuracy.
 def HDOP(hthinv) -> float:
     return sqrt(hthinv[0, 0] + hthinv[1, 1])
 
 
+# Indicator of 3D position and timing accuracy, higher values indicate worse accuracy.
 def GDOP(hthinv) -> float:
     return sqrt(hthinv[0, 0] + hthinv[1, 1] + hthinv[2, 2] + hthinv[3, 3])
 
 
+# Indicator of 3D position accuracy, higher values indicate worse accuracy.
 def PDOP(hthinv) -> float:
     return sqrt(hthinv[0, 0] + hthinv[1, 1] + hthinv[2, 2])
 
@@ -238,9 +240,12 @@ class ECEF:
 
 
 
+    # Calculates the true range (geometric distance) between the receiver and the satellite
+    # Pseudorange is the true range plus the receiver clock bias (offset) multiplied by the speed of light
+    # This is used when the clocks are not synchronized
     def range(self, target: ECEF) -> float:
-        s_j = np.array([target.x, target.y, target.z])
-        r = np.array([self.x, self.y, self.z])
+        s_j = np.array([target.x, target.y, target.z])      # Satellite position vector
+        r = np.array([self.x, self.y, self.z])              # Receiver position vector
         tr2 = (s_j - r).T @ (s_j - r)
         return sqrt(tr2)
 
@@ -248,10 +253,10 @@ class ECEF:
 
     # Offset is positive if receiver is ahead of satellite
     def pseudorange(self, target: ECEF, offset: float = 0.0):
-        s_j = np.array([target.x, target.y, target.z])
-        r = np.array([self.x, self.y, self.z])
-        e_j = (s_j - r) / np.linalg.norm(s_j - r)
-        return e_j.T @ (s_j - r) + c * offset
+        s_j = np.array([target.x, target.y, target.z])      # Satellite position vector
+        r = np.array([self.x, self.y, self.z])              # Receiver position vector
+        e_j = (s_j - r) / np.linalg.norm(s_j - r)           # Unit vector from receiver to satellite
+        return e_j.T @ (s_j - r) + c * offset               # Pseudorange = True Range + Clock Bias * Speed of Light
 
     def to_vector(self) -> np.ndarray:
         return np.array([self.x, self.y, self.z])
